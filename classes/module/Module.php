@@ -1724,13 +1724,18 @@ abstract class ModuleCore implements ModuleInterface
 
         $context = Context::getContext();
 
+        // Fuzzy timeout : to limit CPU starvation, we try to not throw multiple
+        // instances of generateTrustedXml() by using a different timeout per
+        // process ID.
+        $cacheTimeout = 86400 + (posix_getpid() % 600);
+
         // If the xml file exist, isn't empty, isn't too old
         // and if the theme hadn't change
         // we use the file, otherwise we regenerate it
         if (!(
             file_exists(_PS_ROOT_DIR_ . self::CACHE_FILE_TRUSTED_MODULES_LIST)
             && filesize(_PS_ROOT_DIR_ . self::CACHE_FILE_TRUSTED_MODULES_LIST) > 0
-            && ((time() - filemtime(_PS_ROOT_DIR_ . self::CACHE_FILE_TRUSTED_MODULES_LIST)) < 86400)
+            && ((time() - filemtime(_PS_ROOT_DIR_ . self::CACHE_FILE_TRUSTED_MODULES_LIST)) < $cacheTimeout)
             )) {
             self::generateTrustedXml();
         }
